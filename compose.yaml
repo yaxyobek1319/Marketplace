@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: marketplace
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marketplace}
+      POSTGRES_DB: marketplace
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketplace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: ["redis_data:/data"]
+    command: ["redis-server", "--appendonly", "yes"]
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:-local-development-key-change-before-deploy}
+      MEILI_ENV: development
+    ports: ["127.0.0.1:7700:7700"]
+    volumes: ["meili_data:/meili_data"]
+volumes:
+  postgres_data:
+  redis_data:
+  meili_data:

@@ -1,0 +1,20 @@
+name: API checks
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+        env:
+          RUN_WORKERS: 'false'
+      - run: npm run format:check -w @marketplace/api

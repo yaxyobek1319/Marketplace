@@ -1,0 +1,819 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  deletedAt DateTime?
+
+  id        Int               @id @default(autoincrement())
+  parentId  Int?
+  parent    Category?         @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[]        @relation("CategoryTree")
+  nameI18n  Json // {"uz": "Telefonlar", "ru": "Телефоны"}
+  mxikCode  String? // standart MXIK kodi — Product darajasida override qilinishi mumkin
+  riskLevel CategoryRiskLevel @default(LOW)
+  products  Product[]
+}
+
+model Product {
+  moderationRequired Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  favorites          Favorite[]
+
+  id               String             @id @default(uuid())
+  seller           Seller             @relation(fields: [sellerId], references: [id])
+  sellerId         String // har bir kartochka bitta sotuvchiga tegishli
+  category         Category           @relation(fields: [categoryId], references: [id])
+  categoryId       Int
+  titleI18n        Json // {"uz": "...", "ru": "..."}
+  description      String?
+  mxikCodeOverride String? // kategoriya kodidan farq qilsa
+  status           ProductStatus      @default(DRAFT)
+  viewCount        Int                @default(0) // Redis'dan davriy batch orqali yangilanadi — 18-bo'lim
+  variants         ProductVariant[]
+  images           ProductImage[]
+  attributes       ProductAttribute[]
+  reviews          Review[]
+  scans            ProductScan[]
+
+  @@index([sellerId, status])
+  @@index([categoryId, status])
+}
+
+model ProductVariant {
+  id             String          @id @default(uuid())
+  product        Product         @relation(fields: [productId], references: [id])
+  productId      String
+  attributes     Json // masalan {"xotira":"128GB","rang":"qora","ishlab chiqarilgan mamlakat":"Indoneziya"}
+  sku            String
+  price          Decimal         @db.Decimal(12, 2) // narx — har sotuvchining o'z kartochkasida mustaqil
+  stockQuantity  Int             @default(0)
+  salesCount     Int             @default(0) // OrderItem COMPLETED bo'lganda oshiriladi, RETURNED'da kamaytirilmaydi — 18-bo'lim
+  isActive       Boolean         @default(true)
+  orderItems     OrderItem[]
+  cartItems      CartItem[] // 17-bo'lim
+  stockMovements StockMovement[]
+  images         ProductImage[]
+
+  @@unique([productId, sku])
+}
+
+model ProductImage {
+  id        String          @id @default(uuid())
+  product   Product         @relation(fields: [productId], references: [id])
+  productId String
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId String? // null bo'lsa — umumiy mahsulot rasmi
+  url       String
+  sortOrder Int             @default(0)
+}
+
+model StockMovement {
+  id           String            @id @default(uuid())
+  variant      ProductVariant    @relation(fields: [variantId], references: [id])
+  variantId    String
+  changeAmount Int
+  type         StockMovementType
+  reason       String?
+  createdBy    String
+  createdAt    DateTime          @default(now())
+}
+
+model Order {
+  checkoutKey      String        @unique
+  paymentStatus    PaymentStatus @default(PENDING)
+  paidAt           DateTime?
+  paymentExpiresAt DateTime
+  payments         Payment[]
+
+  id              String      @id @default(uuid())
+  buyer           User        @relation(fields: [buyerId], references: [id])
+  buyerId         String
+  items           OrderItem[]
+  totalAmount     Decimal     @db.Decimal(15, 2)
+  deliveryAddress Json
+  creditApplied   Decimal     @default(0) @db.Decimal(12, 2) // BUYER_CREDIT'dan checkout'da avtomatik qo'llangan summa
+  createdAt       DateTime    @default(now())
+
+  @@index([buyerId, createdAt])
+}
+
+model OrderItem {
+  settledSubsidyAmount     Decimal?  @db.Decimal(12, 2)
+  sellerId                 String
+  titleAtPurchase          Json
+  commissionRateAtPurchase Decimal   @db.Decimal(5, 2)
+  commissionAmount         Decimal   @db.Decimal(12, 2)
+  platformDiscountAmount   Decimal   @default(0) @db.Decimal(12, 2)
+  creditApplied            Decimal   @default(0) @db.Decimal(12, 2)
+  deliveryAmount           Decimal   @default(0) @db.Decimal(12, 2)
+  completedAt              DateTime?
+  settledAmount            Decimal?  @db.Decimal(12, 2)
+
+  id                 String              @id @default(uuid())
+  order              Order               @relation(fields: [orderId], references: [id])
+  orderId            String
+  variant            ProductVariant      @relation(fields: [variantId], references: [id])
+  variantId          String
+  quantity           Int
+  priceAtPurchase    Decimal             @db.Decimal(12, 2)
+  discountAmount     Decimal             @default(0) @db.Decimal(12, 2) // shu item'ga tegishli chegirma (do'kon darajasida)
+  appliedPromotionId String?
+  taxRateAtPurchase  Decimal             @db.Decimal(5, 2) // sotuvchining o'sha paytdagi soliq stavkasi (tarix uchun)
+  taxAmount          Decimal             @db.Decimal(12, 2) // hisoblab qo'yilgan soliq summasi
+  deliveryType       DeliveryType // endi item/sotuvchi guruhi darajasida — 17-bo'limga qarang
+  status             OrderItemStatus     @default(PENDING_SELLER_CONFIRMATION)
+  confirmDeadline    DateTime?
+  autoConfirmAt      DateTime?
+  returnRequest      ReturnRequest?
+  dispute            Dispute? // Order emas, OrderItem'ga bog'liq — har sotuvchi bo'yicha mustaqil nizo (14-bo'lim)
+  shipment           Shipment? // 12-bo'lim
+  review             Review? // 9/13-bo'lim
+  ratingEvents       SellerRatingEvent[]
+
+  @@index([sellerId, status])
+  @@index([status, confirmDeadline])
+  @@index([status, autoConfirmAt])
+}
+
+model Promotion {
+  couponCode        String? @unique
+  firstPurchaseOnly Boolean @default(false)
+
+  id              String         @id @default(uuid())
+  scope           PromotionScope // SELLER — faqat shu sotuvchi tovarlariga; PLATFORM — Super Admin yaratadi
+  sellerId        String? // SELLER bo'lsa
+  minAmount       Decimal?       @db.Decimal(12, 2) // masalan 500,000 — chegara summasi
+  discountPercent Decimal?       @db.Decimal(5, 2)
+  fixedAmount     Decimal?       @db.Decimal(12, 2) // kupon bo'lsa (masalan birinchi xaridga)
+  isActive        Boolean        @default(true)
+  startAt         DateTime?
+  endAt           DateTime?
+
+  @@index([sellerId, isActive])
+}
+
+model SellerRatingEvent {
+  id          String            @id @default(uuid())
+  seller      Seller            @relation(fields: [sellerId], references: [id])
+  sellerId    String
+  orderItemId String? // aniq qaysi item sabab bo'lgani (orderId emas — item darajasida aniqroq)
+  points      Decimal           @db.Decimal(4, 2)
+  reason      RatingEventReason
+  createdAt   DateTime          @default(now())
+  orderItem   OrderItem?        @relation(fields: [orderItemId], references: [id])
+}
+
+model ReturnRequest {
+  sellerEvidence Json?
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  receivedAt     DateTime?
+
+  id                   String              @id @default(uuid())
+  orderItem            OrderItem           @relation(fields: [orderItemId], references: [id])
+  orderItemId          String              @unique
+  reason               ReturnReason
+  evidencePhotos       Json?
+  status               ReturnStatus        @default(REQUESTED)
+  deadlineDays         Int                 @default(7) // barcha sabablar uchun 7 kun — hal qilindi
+  returnShippingPaidBy ReturnShippingPayer @default(PLATFORM)
+  createdAt            DateTime            @default(now())
+}
+
+model Seller {
+  rejectionReason String?
+  pickupAddress   String?
+
+  id                String              @id @default(uuid())
+  user              User                @relation(fields: [userId], references: [id])
+  userId            String              @unique
+  storeName         String
+  legalTaxId        String? // STIR — huquqiy/soliq talabi uchun
+  payoutAccount     String? // payout uchun bank/karta ma'lumoti (masked, 10-bo'lim)
+  commissionRate    Decimal             @default(2.0) @db.Decimal(5, 2)
+  taxRate           Decimal             @default(0) @db.Decimal(5, 2)
+  rating            Decimal             @default(5.0) @db.Decimal(3, 2) // operatsion ishonchlilik — mahsulot reytingidan alohida (9-bo'lim)
+  status            SellerStatus        @default(PENDING)
+  depositBalance    Decimal             @default(0) @db.Decimal(15, 2)
+  depositHeldAmount Decimal             @default(0) @db.Decimal(15, 2) // shubhali holatda bloklangan qism
+  createdAt         DateTime            @default(now())
+  products          Product[]
+  ratingEvents      SellerRatingEvent[]
+  sanctions         SellerSanction[]
+}
+
+model DepositTier {
+  id              Int     @id @default(autoincrement())
+  minProductCount Int // masalan 0, keyin 20 — sotuvchining faol mahsulot soniga qarab
+  depositAmount   Decimal @db.Decimal(12, 2)
+
+  @@unique([minProductCount])
+}
+
+model SellerSanction {
+  id        String       @id @default(uuid())
+  seller    Seller       @relation(fields: [sellerId], references: [id])
+  sellerId  String
+  type      SanctionType
+  reason    String
+  appliedBy String // admin id
+  startAt   DateTime     @default(now())
+  endAt     DateTime? // vaqtinchalik bo'lsa
+}
+
+model LedgerEntry {
+  group LedgerGroup @relation(fields: [groupId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ledger_group_fk")
+
+  id          String            @id @default(uuid())
+  groupId     String // bitta biznes hodisasiga tegishli barcha yozuvlarni bog'laydi
+  account     LedgerAccountType
+  ownerId     String? // SELLER_* bo'lsa sellerId
+  direction   LedgerDirection
+  amount      Decimal           @db.Decimal(15, 2)
+  orderId     String?
+  orderItemId String? // bitta sotuvchi bir buyurtmada 2+ item sotgan holatlarni aniq ajratish uchun
+  createdAt   DateTime          @default(now())
+
+  @@index([account, ownerId])
+  @@index([groupId])
+  @@index([orderItemId])
+}
+
+model Payout {
+  idempotencyKey   String  @unique
+  destinationToken String
+  approvedBy       String?
+  bankFeeAmount    Decimal @default(0) @db.Decimal(12, 2)
+
+  id                String       @id @default(uuid())
+  payeeType         PayeeType // SELLER yoki BUYER — bitta mexanizm, ikkalasiga ham xizmat qiladi
+  payeeId           String // sellerId yoki buyerId
+  amount            Decimal      @db.Decimal(15, 2)
+  status            PayoutStatus @default(PENDING)
+  provider          String
+  providerRef       String?      @unique
+  destinationMasked String // faqat oxirgi 4 raqam — to'liq karta raqami DBda saqlanmaydi
+  requestedAt       DateTime     @default(now())
+  processedAt       DateTime?
+  failureReason     String?
+
+  @@index([payeeType, payeeId, status])
+}
+
+model ProductScan {
+  id        String     @id @default(uuid())
+  product   Product    @relation(fields: [productId], references: [id])
+  productId String
+  type      ScanType
+  result    ScanResult
+  details   Json?
+  createdAt DateTime   @default(now())
+}
+
+model ProhibitedKeyword {
+  id       String   @id @default(uuid())
+  term     String
+  severity Severity
+  addedBy  String
+}
+
+model ProductAttribute {
+  id        String        @id @default(uuid())
+  product   Product       @relation(fields: [productId], references: [id])
+  productId String
+  key       String // "Material", "Sertifikat", "Kafolat muddati" va h.k. — MVP'da erkin matn
+  value     Json // {"uz":"...","ru":"..."} yoki matn/raqam; FILE turida url
+  type      AttributeType @default(TEXT)
+}
+
+model Review {
+  id          String    @id @default(uuid())
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  orderItemId String    @unique // faqat COMPLETED buyurtmaga, bitta marta
+  buyer       User      @relation(fields: [buyerId], references: [id])
+  buyerId     String
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   String
+  rating      Int // 1-5
+  comment     String?
+  photos      Json? // izohga biriktirilgan suratlar
+  createdAt   DateTime  @default(now())
+
+  sellerReply   String? // sotuvchining javobi
+  sellerReplyAt DateTime?
+  deletedAt     DateTime? // moderator tomonidan olib tashlansa (soft-delete, tarix uchun)
+  deletedReason String?
+}
+
+model PaymentWebhookEvent {
+  id              String    @id @default(uuid())
+  provider        String
+  providerEventId String // Click/Payme'ning o'z hodisa ID'si — idempotentlik
+  payload         Json
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([provider, providerEventId])
+}
+
+model User {
+  locale           String     @default("uz")
+  marketingEnabled Boolean    @default(true)
+  favorites        Favorite[]
+
+  id             String      @id @default(uuid())
+  phone          String      @unique
+  passwordHash   String?
+  fullName       String?
+  isActive       Boolean     @default(true)
+  telegramChatId String? // Telegram bot bilan ulangandan keyin to'ldiriladi (15-bo'lim)
+  createdAt      DateTime    @default(now())
+  addresses      Address[]
+  seller         Seller? // ixtiyoriy — bitta odam ham xaridor, ham sotuvchi bo'la oladi
+  orders         Order[]
+  reviews        Review[]
+  pushTokens     PushToken[]
+  cart           Cart?
+}
+
+model OtpCode {
+  id         String     @id @default(uuid())
+  phone      String
+  codeHash   String // hech qachon ochiq matn saqlanmaydi
+  purpose    OtpPurpose
+  expiresAt  DateTime
+  attempts   Int        @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model StaffAccount {
+  permissions              String[] @default([])
+  twoFactorSecretEncrypted String?
+  lastTotpStep             BigInt?
+
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String
+  fullName         String
+  role             StaffRole
+  isActive         Boolean   @default(true)
+  twoFactorEnabled Boolean   @default(false)
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+model RefreshToken {
+  accessTokenHash String   @unique
+  accessExpiresAt DateTime
+
+  id          String          @id @default(uuid())
+  subjectType AuthSubjectType // USER yoki STAFF
+  subjectId   String
+  tokenHash   String          @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime        @default(now())
+
+  @@index([subjectType, subjectId])
+}
+
+model Shipment {
+  region        String
+  pickupAddress String
+
+  id                  String         @id @default(uuid())
+  orderItem           OrderItem      @relation(fields: [orderItemId], references: [id])
+  orderItemId         String         @unique // har sotuvchi mustaqil jo'natgani uchun — 1:1
+  provider            String? // BTS, FARGO, YANDEX_DELIVERY
+  providerRef         String?        @unique // tashqi tizim jo'natma ID'si — idempotentlik uchun ham
+  status              ShipmentStatus @default(AWAITING_DISPATCH)
+  batchGroupId        String? // FREE turdagi, bir hududga guruhlangan jo'natmalar uchun umumiy ID
+  scheduledDispatchAt DateTime? // FREE uchun: shu vaqtda hali jo'natilmagan bo'lsa, yakka tartibda yuboriladi
+  recipientAddress    String // Order.deliveryAddress'dan olingan aniq manzil — kuryerga to'g'ridan-to'g'ri beriladi
+  recipientPhone      String // xaridor telefon raqami — kuryerga to'g'ridan-to'g'ri beriladi
+  trackingCode        String?
+  dispatchedAt        DateTime?
+  deliveredAt         DateTime?
+  createdAt           DateTime       @default(now())
+}
+
+model DeliveryWebhookEvent {
+  id              String    @id @default(uuid())
+  provider        String
+  providerEventId String
+  payload         Json
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@unique([provider, providerEventId])
+}
+
+model Dispute {
+  id                     String             @id @default(uuid())
+  orderItem              OrderItem          @relation(fields: [orderItemId], references: [id])
+  orderItemId            String             @unique
+  reason                 DisputeReason
+  buyerEvidence          Json? // suratlar, tavsif
+  sellerEvidence         Json? // sotuvchining dalili/javobi
+  sellerResponseDeadline DateTime?
+  status                 DisputeStatus      @default(OPEN)
+  resolution             DisputeResolution?
+  resolutionAmount       Decimal?           @db.Decimal(12, 2) // PARTIAL bo'lsa — xaridorga qaytariladigan qism
+  resolvedBy             String? // moderator id
+  resolvedAt             DateTime?
+  createdAt              DateTime           @default(now())
+}
+
+model PushToken {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  token     String   @unique
+  platform  String // ios, android
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model TelegramLinkToken {
+  id         String    @id @default(uuid())
+  userId     String
+  token      String    @unique // bir martalik, deep-link uchun: t.me/BotName?start=<token>
+  expiresAt  DateTime
+  consumedAt DateTime?
+}
+
+model NotificationTemplate {
+  updatedAt DateTime @updatedAt
+
+  id        String                @id @default(uuid())
+  eventType NotificationEventType @unique
+  bodyI18n  Json // {"uz": "...", "ru": "..."} — o'zgaruvchilar bilan
+  critical  Boolean               @default(false) // true bo'lsa, bepul kanal yetmasa SMS fallback ishlaydi
+}
+
+model Notification {
+  exhaustedAt DateTime?
+  eventKey String
+
+  id          String                @id @default(uuid())
+  userId      String
+  channel     NotificationChannel
+  eventType   NotificationEventType
+  payload     Json // shablonga qo'yiladigan qiymatlar (orderId, summa va h.k.)
+  status      NotificationStatus    @default(PENDING)
+  providerRef String? // SMS shlyuzi/Telegram xabar ID'si
+  sentAt      DateTime?
+  createdAt   DateTime              @default(now())
+
+  @@unique([eventKey, userId, channel])
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  buyer     User       @relation(fields: [buyerId], references: [id])
+  buyerId   String     @unique // xaridorga bitta faol savat
+  updatedAt DateTime   @updatedAt
+  items     CartItem[]
+}
+
+model CartItem {
+  id           String         @id @default(uuid())
+  cart         Cart           @relation(fields: [cartId], references: [id])
+  cartId       String
+  variant      ProductVariant @relation(fields: [variantId], references: [id])
+  variantId    String
+  quantity     Int
+  deliveryType DeliveryType   @default(STANDARD) // item/sotuvchi guruhi darajasida — checkout'da OrderItem.deliveryType'ga ko'chadi
+  addedAt      DateTime       @default(now())
+
+  @@unique([cartId, variantId])
+}
+
+model AdminActionLog {
+  id         String          @id @default(uuid())
+  staffId    String // StaffAccount id (11-bo'lim), akkaunt o'chirilsa ham saqlanib qoladi
+  actionType AdminActionType
+  targetType String // "Seller", "Product", "Dispute", "Payout", "Category" va h.k.
+  targetId   String
+  metadata   Json? // oldingi/keyingi qiymat — masalan {from: 2.0, to: 2.5}
+  createdAt  DateTime        @default(now())
+}
+
+model Address {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  label          String?
+  address        String
+  recipientPhone String
+  region         String
+  latitude       Decimal? @db.Decimal(10, 7)
+  longitude      Decimal? @db.Decimal(10, 7)
+  createdAt      DateTime @default(now())
+}
+
+enum CategoryRiskLevel {
+  LOW
+  HIGH
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
+enum StockMovementType {
+  INITIAL
+  MANUAL_ADJUSTMENT
+  SALE
+  WRITE_OFF
+  RETURN
+}
+
+enum DeliveryType {
+  EXPRESS
+  STANDARD
+  FREE
+}
+
+enum OrderItemStatus {
+  PENDING_SELLER_CONFIRMATION
+  CONFIRMED
+  SHIPPED
+  COMPLETED
+  DISPUTED
+  RETURNED
+  CANCELLED
+}
+
+enum PromotionScope {
+  SELLER
+  PLATFORM
+}
+
+enum RatingEventReason {
+  MISSED_CONFIRMATION
+  SELLER_CANCELLED
+  FAST_RESPONSE_BONUS
+}
+
+enum ReturnReason {
+  DEFECTIVE
+  NOT_AS_DESCRIBED
+  CHANGED_MIND
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  ITEM_RECEIVED
+  REFUNDED
+}
+
+enum ReturnShippingPayer {
+  PLATFORM
+  BUYER
+}
+
+enum SellerStatus {
+  PENDING
+  APPROVED_AWAITING_DEPOSIT
+  ACTIVE
+  SUSPENDED
+}
+
+enum SanctionType {
+  RATING_PENALTY
+  TEMP_SUSPENSION
+  DEPOSIT_HOLD
+  PERMANENT_BAN
+}
+
+enum LedgerAccountType {
+  PLATFORM_CASH
+  SELLER_FROZEN
+  SELLER_AVAILABLE
+  SELLER_DEPOSIT
+  BUYER_CREDIT
+  PLATFORM_COMMISSION_REVENUE
+  PLATFORM_SUBSIDY_EXPENSE
+  PLATFORM_BANK_FEE_EXPENSE
+  PLATFORM_TAX_PAYABLE
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum PayeeType {
+  SELLER
+  BUYER
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum ScanType {
+  SUBMISSION_KEYWORD
+  PERIODIC_RESCAN
+  USER_REPORT_TRIGGERED
+}
+
+enum ScanResult {
+  CLEAN
+  FLAGGED
+  BLOCKED
+}
+
+enum Severity {
+  CRITICAL
+  MEDIUM
+}
+
+enum AttributeType {
+  TEXT
+  NUMBER
+  FILE
+}
+
+enum OtpPurpose {
+  REGISTER
+  LOGIN
+}
+
+enum StaffRole {
+  MODERATOR
+  SUPER_ADMIN
+}
+
+enum AuthSubjectType {
+  USER
+  STAFF
+}
+
+enum ShipmentStatus {
+  AWAITING_DISPATCH
+  BATCHED
+  DISPATCHED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+enum DisputeReason {
+  ITEM_NOT_RECEIVED
+  ITEM_SIGNIFICANTLY_DIFFERENT
+  DAMAGED_IN_TRANSIT
+  OTHER
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+}
+
+enum DisputeResolution {
+  BUYER_FAVOR
+  SELLER_FAVOR
+  PARTIAL
+}
+
+enum NotificationEventType {
+  SELLER_CONFIRMATION_NEEDED
+  ORDER_SHIPPED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  PAYOUT_COMPLETED
+  PROMOTION_REMINDER
+}
+
+enum NotificationChannel {
+  SMS
+  PUSH
+  TELEGRAM
+}
+
+enum NotificationStatus {
+  SKIPPED
+  PENDING
+  SENT
+  FAILED
+}
+
+enum AdminActionType {
+  DELIVERY_RETRIED
+  REPORT_RESOLVED
+  SELLER_REJECTED
+  DEPOSIT_CHANGED
+  RETURN_RESOLVED
+  KEYWORD_CHANGED
+  TEMPLATE_CHANGED
+  STAFF_CHANGED
+  SELLER_APPROVED
+  SELLER_SUSPENDED
+  PRODUCT_APPROVED
+  PRODUCT_REJECTED
+  DISPUTE_RESOLVED
+  SANCTION_APPLIED
+  PAYOUT_APPROVED
+  PAYOUT_REJECTED
+  CATEGORY_EDITED
+  COMMISSION_RATE_CHANGED
+  TAX_RATE_CHANGED
+  PROMOTION_CREATED
+  REVIEW_DELETED
+}
+
+model Favorite {
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@id([userId, productId])
+}
+
+model Payment {
+  checkoutUrl String?
+  id          String        @id @default(uuid())
+  orderId     String?
+  order       Order?        @relation(fields: [orderId], references: [id])
+  sellerId    String?
+  purpose     String
+  provider    String
+  providerRef String?
+  amount      Decimal       @db.Decimal(15, 2)
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([provider, providerRef])
+  @@index([orderId, status])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  FAILED
+}
+
+model LedgerGroup {
+  entries   LedgerEntry[]
+  id        String        @id
+  createdAt DateTime      @default(now())
+}
+
+model OutboxEvent {
+  id          String    @id @default(uuid())
+  topic       String
+  payload     Json
+  priority    Int       @default(5)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([publishedAt, createdAt])
+}
+
+model AuthAttempt {
+  id        String   @id @default(uuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+
+model ContentReport {
+  id String @id @default(uuid())
+  reporterId String
+  targetType String
+  targetId String
+  reason String
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolution String?
+  createdAt DateTime @default(now())
+  @@index([resolvedAt, createdAt])
+  @@unique([reporterId, targetType, targetId])
+}

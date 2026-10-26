@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+**/dist-test
+**/.env
+.git
+.agents
+.codex
+.aws
+docs

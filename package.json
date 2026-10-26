@@ -1,0 +1,22 @@
+{
+  "name": "marketplace",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @marketplace/api",
+    "build": "npm run build -w @marketplace/api && node scripts/export-api.cjs",
+    "typecheck": "npm run typecheck -w @marketplace/api",
+    "db:generate": "npm run db:generate -w @marketplace/api",
+    "db:migrate": "npm run db:migrate -w @marketplace/api",
+    "test": "npm run test -w @marketplace/api",
+    "db:deploy": "npm run db:deploy -w @marketplace/api",
+    "db:seed": "npm run db:seed -w @marketplace/api",
+    "check": "npm run db:generate && npm run typecheck && npm run test && npm run build",
+    "dev:web": "npm run dev -w @marketplace/web",
+    "build:web": "npm run build -w @marketplace/web",
+    "swagger": "npm run build -w @marketplace/api && node scripts/preview-swagger.cjs",
+    "swagger:export": "npm run build -w @marketplace/api"
+  }
+}

@@ -1,0 +1,996 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/audit",
+    "public": false,
+    "permissions": [
+      "audit:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/deposit-tiers",
+    "public": false,
+    "permissions": [
+      "deposits:manage"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/deposit-tiers/:count",
+    "public": false,
+    "permissions": [
+      "deposits:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/keywords",
+    "public": false,
+    "permissions": [
+      "keywords:manage"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/keywords",
+    "public": false,
+    "permissions": [
+      "keywords:manage"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/admin/keywords/:id",
+    "public": false,
+    "permissions": [
+      "keywords:manage"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/admin/keywords/:id",
+    "public": false,
+    "permissions": [
+      "keywords:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/ledger",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/notification-templates",
+    "public": false,
+    "permissions": [
+      "notifications:templates"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/notification-templates/:event",
+    "public": false,
+    "permissions": [
+      "notifications:templates"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/queues/disputes",
+    "public": false,
+    "permissions": [
+      "disputes:resolve"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/queues/payouts",
+    "public": false,
+    "permissions": [
+      "payouts:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/queues/products",
+    "public": false,
+    "permissions": [
+      "products:review"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/queues/reports",
+    "public": false,
+    "permissions": [
+      "admin:queues"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/queues/returns",
+    "public": false,
+    "permissions": [
+      "returns:resolve"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/queues/sellers",
+    "public": false,
+    "permissions": [
+      "sellers:review"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/reports/:id/resolve",
+    "public": false,
+    "permissions": [
+      "admin:queues"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/finance",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/finance.csv",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/payouts",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/popular",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/sellers",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reports/tax",
+    "public": false,
+    "permissions": [
+      "finance:read"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/admin/staff/:id",
+    "public": false,
+    "permissions": [
+      "staff:manage"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/login",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/logout-all",
+    "public": false,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/otp/request",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/otp/verify",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/refresh",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/register",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/auth/session",
+    "public": false,
+    "permissions": [
+      "session:read"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/auth/staff/login",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/cart",
+    "public": false,
+    "permissions": [
+      "cart:own"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/cart/items/:id",
+    "public": false,
+    "permissions": [
+      "cart:own"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/cart/items/:id",
+    "public": false,
+    "permissions": [
+      "cart:own"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/cart/sellers/:id/delivery",
+    "public": false,
+    "permissions": [
+      "cart:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/catalog/categories",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/categories",
+    "public": false,
+    "permissions": [
+      "categories:manage"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/catalog/categories/:id",
+    "public": false,
+    "permissions": [
+      "categories:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/catalog/mine",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/products",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/catalog/products/:id",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/catalog/products/:id",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/catalog/products/:id/attributes",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/catalog/products/:id/images",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/products/:id/moderate",
+    "public": false,
+    "permissions": [
+      "products:review"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/products/:id/submit",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/products/:id/variants",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/products/:id/view",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/catalog/variants/:id",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/catalog/variants/:id/stock",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/delivery/failed",
+    "public": false,
+    "permissions": [
+      "admin:queues"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/delivery/items/:id/ready",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/delivery/shipments/:id/retry",
+    "public": false,
+    "permissions": [
+      "admin:queues"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/delivery/webhooks/:provider",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/finance/mine",
+    "public": false,
+    "permissions": [
+      "payouts:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/finance/payouts",
+    "public": false,
+    "permissions": [
+      "payouts:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/finance/payouts",
+    "public": false,
+    "permissions": [
+      "payouts:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/finance/payouts/:id/decision",
+    "public": false,
+    "permissions": [
+      "payouts:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/finance/seller-report",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/finance/seller-report.csv",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/finance/transactions",
+    "public": false,
+    "permissions": [
+      "payouts:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/health",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/health/live",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/me",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/me",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/me/addresses",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/me/addresses",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/me/addresses/:id",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/me/addresses/:id",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/me/favorites",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/me/favorites/:id",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/me/favorites/:id",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/media/products",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/media/products/:filename",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/notifications",
+    "public": false,
+    "permissions": [
+      "notifications:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/notifications/push-tokens",
+    "public": false,
+    "permissions": [
+      "notifications:own"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/notifications/push-tokens/:id",
+    "public": false,
+    "permissions": [
+      "notifications:own"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/notifications/telegram/link",
+    "public": false,
+    "permissions": [
+      "notifications:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/notifications/telegram/link",
+    "public": false,
+    "permissions": [
+      "notifications:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/notifications/telegram/webhook",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/orders",
+    "public": false,
+    "permissions": [
+      "orders:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/orders/:id",
+    "public": false,
+    "permissions": [
+      "orders:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/orders/checkout",
+    "public": false,
+    "permissions": [
+      "orders:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/orders/items/:id/complete",
+    "public": false,
+    "permissions": [
+      "orders:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/orders/items/:id/confirm",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/orders/seller-items",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/payments/deposit",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/payments/deposits",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/payments/providers",
+    "public": false,
+    "permissions": [
+      "orders:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/payments/webhooks/:provider",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/promotions/mine",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/promotions/platform",
+    "public": false,
+    "permissions": [
+      "promotions:platform:create"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/promotions/platform/:id",
+    "public": false,
+    "permissions": [
+      "promotions:platform:create"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/promotions/seller",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/promotions/seller/:id",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/reports",
+    "public": false,
+    "permissions": [
+      "profile:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/search",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/sellers",
+    "public": false,
+    "permissions": [
+      "seller:apply"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sellers/:id",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/sellers/:id/content-sanctions",
+    "public": false,
+    "permissions": [
+      "sanctions:content"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/sellers/:id/finance-sanctions",
+    "public": false,
+    "permissions": [
+      "sanctions:finance"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/sellers/:id/rates",
+    "public": false,
+    "permissions": [
+      "sellers:rates"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/sellers/:id/review",
+    "public": false,
+    "permissions": [
+      "sellers:review"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/sellers/mine",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/disputes/:id/resolve",
+    "public": false,
+    "permissions": [
+      "disputes:resolve"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/disputes/:id/response",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/items/:id/dispute",
+    "public": false,
+    "permissions": [
+      "disputes:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/items/:id/return",
+    "public": false,
+    "permissions": [
+      "returns:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/items/:id/review",
+    "public": false,
+    "permissions": [
+      "reviews:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/trust/products/:id/reviews",
+    "public": true,
+    "permissions": []
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/returns/:id/decision",
+    "public": false,
+    "permissions": [
+      "returns:resolve"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/returns/:id/received",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/returns/:id/refund",
+    "public": false,
+    "permissions": [
+      "returns:resolve"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/returns/:id/response",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/trust/reviews/:id",
+    "public": false,
+    "permissions": [
+      "reviews:own"
+    ]
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/trust/reviews/:id",
+    "public": false,
+    "permissions": [
+      "reviews:own"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/reviews/:id/hide",
+    "public": false,
+    "permissions": [
+      "reviews:moderate"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/trust/reviews/:id/reply",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/admin/categories",
+    "public": false,
+    "permissions": [
+      "categories:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/admin/content-sellers",
+    "public": false,
+    "permissions": [
+      "sanctions:content"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/admin/promotions",
+    "public": false,
+    "permissions": [
+      "promotions:platform:create"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/admin/reviews",
+    "public": false,
+    "permissions": [
+      "reviews:moderate"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/admin/sellers",
+    "public": false,
+    "permissions": [
+      "sellers:rates"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/admin/staff",
+    "public": false,
+    "permissions": [
+      "staff:manage"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/seller/disputes",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/seller/overview",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/seller/returns",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/workspace/seller/reviews",
+    "public": false,
+    "permissions": [
+      "seller:own"
+    ]
+  }
+]
